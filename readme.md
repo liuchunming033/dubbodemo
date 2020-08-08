@@ -64,11 +64,10 @@ dubbo-provider子项目的pom文件中加入公共接口所在的依赖包。
     <dubbo:registry address="zookeeper://localhost:2181" timeout="3000"/>
     <!-- 用dubbo协议在20880端口暴露服务 -->
     <dubbo:protocol name="dubbo" port="20880" />
-    <!--增加hessian协议-->
-    <dubbo:protocol name="hessian" port="8090" server="jetty" />
-    <!--使用 dubbo 协议实现定义好的 api.PermissionService 接口-->
-    <!--    因为 name 指定的是传输协议的名称：dubbo rmi hessian webservice （对应常见的传输协议：Dubbo、RMI、Hessain、WebService、Http)-->
     <dubbo:service interface="chunming.liu.dubbo.api.IDubboService" ref="dubboService" protocol="dubbo" />
+    <!--增加hessian协议，如果设置server="servlet",则需要web容器支持,我们的provider是以jar方式运行的，所以用jetty-->
+    <dubbo:protocol name="hessian" port="20881" server="jetty" contextpath="dubbo-provider"/>
+    <dubbo:service interface="chunming.liu.dubbo.api.IDubboService" ref="dubboService" protocol="hessian" />
     <!--具体实现该接口的 bean-->
     <bean id="dubboService" class="chunming.liu.dubbo.provider.DubboServiceImpl"/>
 </beans>
@@ -209,16 +208,31 @@ if __name__ == '__main__':
 Hessian协议用于集成Hessian的服务，Hessian底层采用Http通讯，采用Servlet暴露服务。适用场景：传入传出参数数据包较大，提供者比消费者个数多，提供者压力较大，可传文件。因此比较高效的做法是带上传下载文件的服务使用hessian协议，普通的服务使用dubbo协议。
 在dubbo-provider的pom文件中引入依赖：
 ```xml
-<dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
+ <dependency>
+            <groupId>org.mortbay.jetty</groupId>
+            <artifactId>jetty</artifactId>
+            <version>6.1.26</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-util</artifactId>
+            <version>9.4.3.v20170317</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-server</artifactId>
+            <version>9.4.3.v20170317</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlet</artifactId>
+            <version>9.3.9.v20160517</version>
         </dependency>
 ```
 在dubbo-provider的dubbo-provider-applicationContext.xml中增加hessian协议的支持。
 ```xml
     <!--增加hessian协议-->
-    <dubbo:protocol name="hessian" port="8090" server="servlet" contextpath="dubbo-provider"/>
+    <dubbo:protocol name="hessian" port="8090" server="jetty" contextpath="dubbo-provider"/>
     <dubbo:service interface="chunming.liu.dubbo.api.IDubboService" ref="dubboService" protocol="hessian" />
 ```
 
